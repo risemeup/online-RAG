@@ -1,0 +1,29 @@
+# 核心框架
+fastapi==0.110.0
+uvicorn==0.28.0
+
+# Langchain 相关库
+langchain==0.1.13
+langchain-openai==0.0.7
+langchain-community==0.0.29
+langchain-chroma==0.1.1
+
+# 向量数据库
+chromadb==0.4.24
+
+# 嵌入模型
+sentence-transformers==2.5.1
+transformers==4.38.2
+
+# 文档处理
+unstructured==0.10.30
+python-docx==0.8.11
+pypdf==4.0.2
+
+# 其他依赖
+pydantic-settings==2.2.1
+python-dotenv==1.0.1
+requests==2.31.0
+tqdm==4.66.2
+numpy==1.26.4
+pandas==2.2.1
