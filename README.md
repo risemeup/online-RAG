@@ -37,47 +37,78 @@
 
 ```
 smart-doc-assistant/
-├── api/                     # API接口层
-│   ├── __init__.py
-│   ├── endpoints/           # 路由端点
+├── README.md                # 项目说明文档
+├── .gitignore              # Git忽略文件配置
+├── data/                   # 示例数据文件
+├── logs/                   # 日志文件目录
+├── chroma_db/              # 向量数据库存储目录（运行时生成）
+├── backend/                # 后端项目
+│   ├── api/                # API接口层
 │   │   ├── __init__.py
-│   │   ├── document.py      # 文档相关API
-│   │   └── qa.py            # 问答相关API
-│   └── models/              # 请求响应模型
-│       ├── __init__.py
-│       ├── document.py
-│       └── qa.py
-├── app/                     # 应用入口
-│   ├── __init__.py
-│   └── main.py
-├── config/                  # 配置文件
-│   ├── __init__.py
-│   └── settings.py
-├── core/                    # 核心功能模块
-│   └── __init__.py
-├── services/                # 业务服务层
-│   ├── __init__.py
-│   ├── document_service.py  # 文档处理服务
-│   ├── llm_service.py       # LLM服务
-│   └── rag_service.py       # RAG检索问答服务
-├── storage/                 # 存储层
-│   ├── __init__.py
-│   ├── document_store.py    # 文档存储
-│   ├── vector_store.py      # 向量存储
-│   └── documents/           # 文档文件存储目录
-├── utils/                   # 工具函数
-│   ├── __init__.py
-│   └── text_processor.py    # 文本处理工具
-├── tests/                   # 测试代码
-│   ├── __init__.py
-│   ├── test_document.py
-│   └── test_rag_service.py
-├── .env                     # 环境变量配置
-├── requirements.txt         # 项目依赖
-├── start.sh                 # 启动脚本
-├── chroma_db/               # 向量数据库存储目录
-├── data/                    # 示例数据
-└── README.md                # 项目文档
+│   │   ├── endpoints/      # 路由端点
+│   │   │   ├── __init__.py
+│   │   │   ├── document.py # 文档相关API
+│   │   │   └── qa.py       # 问答相关API
+│   │   └── models/         # 请求响应模型
+│   │       └── __init__.py
+│   ├── app/                # 应用入口
+│   │   └── main.py
+│   ├── config/             # 配置文件
+│   │   ├── __init__.py
+│   │   └── settings.py
+│   ├── core/               # 核心功能模块
+│   │   └── __init__.py
+│   ├── services/           # 业务服务层
+│   │   ├── __init__.py
+│   │   ├── document_service.py  # 文档处理服务
+│   │   ├── llm_service.py       # LLM服务
+│   │   └── rag_service.py       # RAG检索问答服务
+│   ├── storage/            # 存储层
+│   │   ├── __init__.py
+│   │   ├── document_store.py    # 文档存储
+│   │   ├── vector_store.py      # 向量存储
+│   │   └── documents/           # 文档文件存储目录
+│   ├── utils/              # 工具函数
+│   │   ├── __init__.py
+│   │   ├── exception_handler.py # 异常处理
+│   │   ├── logger.py            # 日志工具
+│   │   ├── response.py          # 响应格式
+│   │   └── text_processor.py    # 文本处理工具
+│   ├── tests/              # 测试代码
+│   │   ├── base_endpoint.py
+│   │   ├── run_all_test.py
+│   │   ├── test_document.py
+│   │   └── test_rag_service.py
+│   ├── requirements.txt    # Python项目依赖
+│   └── start.sh           # 后端启动脚本
+└── front/                 # 前端项目
+    ├── src/               # 源代码
+    │   ├── App.vue        # 主应用组件
+    │   ├── main.ts        # 应用入口
+    │   ├── style.css      # 全局样式
+    │   ├── components/    # Vue组件
+    │   │   ├── ChatInterface/    # 聊天界面组件
+    │   │   └── DocumentManager/  # 文档管理组件
+    │   ├── store/         # 状态管理
+    │   │   ├── index.ts   # Store入口
+    │   │   ├── chat.ts    # 聊天状态
+    │   │   └── document.ts # 文档状态
+    │   ├── types/         # TypeScript类型定义
+    │   │   ├── chat.ts
+    │   │   └── document.ts
+    │   ├── utils/         # 工具函数
+    │   │   ├── config.ts  # 配置
+    │   │   └── service.ts # API服务
+    │   └── views/         # 页面视图
+    │       └── Home.vue
+    ├── public/            # 静态资源
+    ├── dist/              # 构建输出目录
+    ├── package.json       # Node.js依赖
+    ├── pnpm-lock.yaml     # 包管理器锁定文件
+    ├── vite.config.ts     # Vite配置
+    ├── tsconfig.json      # TypeScript配置
+    ├── tsconfig.app.json  # 应用TypeScript配置
+    └── tsconfig.node.json # Node.js TypeScript配置
 ```
 
 ## 技术栈
@@ -260,11 +291,39 @@ CHUNK_OVERLAP=200
 
 ## 快速开始
 
-### 使用启动脚本
+### 🚀 一键启动（推荐）
+
+```bash
+# 在项目根目录执行
+./start-all.sh
+```
+
+这个脚本会自动：
+- 检查环境依赖（Python3、pnpm）
+- 安装后端和前端依赖（如果需要）
+- 启动后端API服务（端口 8000）
+- 启动前端开发服务器（端口 5173）
+- 显示访问地址和使用提示
+
+启动完成后：
+- 📱 前端界面: http://localhost:5173
+- 📚 API文档: http://localhost:8000/docs
+- 🔧 API接口: http://localhost:8000
+
+按 `Ctrl+C` 可同时停止前后端服务。
+
+### 🔧 分别启动
+
+#### 后端启动
+
+**使用启动脚本（推荐）**
 
 项目提供了`start.sh`脚本以简化依赖安装、服务器启动和测试运行等操作：
 
 ```bash
+# 进入后端目录
+cd backend
+
 # 安装依赖
 bash start.sh install
 
@@ -281,12 +340,40 @@ bash start.sh all
 bash start.sh help
 ```
 
-### 手动启动
+**手动启动**
 
-1. 克隆项目代码
-2. 安装依赖：`pip install -r requirements.txt`
-3. 配置环境变量：在`.env`文件中设置`DEEPSEEK_API_KEY`
-4. 启动服务：`uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+```bash
+# 进入后端目录
+cd backend
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 配置环境变量：在项目根目录的.env文件中设置DEEPSEEK_API_KEY
+# 启动服务
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### 前端启动
+
+```bash
+# 进入前端目录
+cd front
+
+# 安装依赖
+pnpm install
+
+# 启动开发服务器
+pnpm dev
+
+# 构建生产版本
+pnpm build
+```
+
+### 📋 启动前准备
+
+1. **配置环境变量**：在项目根目录创建`.env`文件并配置LLM相关参数
+2. **确保已安装 Python3 和 pnpm**
 
 ### 访问API文档
 

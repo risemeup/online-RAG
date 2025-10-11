@@ -31,3 +31,17 @@ Thumbs.db
 
 # 测试文件
 test/storage/*
+
+# 前端相关
+front/node_modules/
+front/dist/
+front/.vite/
+front/.env.local
+front/.env.development.local
+front/.env.test.local
+front/.env.production.local
+
+# 依赖锁定文件（可选，根据团队约定）
+# front/pnpm-lock.yaml
+# front/package-lock.json
+# front/yarn.lock

@@ -7,7 +7,7 @@ export TOKENIZERS_PARALLELISM=false  # 禁止HuggingFace tokenizers并行处理�
 export PYTHONWARNINGS="ignore::DeprecationWarning,ignore::UserWarning:langchain"
 
 # 加载用户环境变量
-source .env 2>/dev/null || echo "未找到.env文件，使用默认配置"
+source ../.env 2>/dev/null || echo "未找到.env文件，使用默认配置"
 
 # 确保脚本在出错时退出
 set -e
@@ -16,8 +16,8 @@ set -e
 clear_data() {
     echo "正在清空向量数据库和本地文本缓存..."
     
-    # 获取向量数据库路径（默认为./chroma_db）
-    VECTOR_STORE_PATH="${VECTOR_STORE_PATH:-./chroma_db}"
+    # 获取向量数据库路径（默认为../chroma_db）
+    VECTOR_STORE_PATH="${VECTOR_STORE_PATH:-../chroma_db}"
     DOCUMENT_STORAGE_PATH="${DOCUMENT_STORAGE_PATH:-./storage/documents}"
     
     # 清空向量数据库
