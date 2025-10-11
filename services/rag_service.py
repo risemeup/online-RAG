@@ -47,19 +47,18 @@ class RAGService:
             return_source_documents=True
         )
     
-    def query(self, question: str, top_k: int, session_id: str) -> Dict[str, Any]:
+    def query(self, question: str, top_k: int = 3) -> Dict[str, Any]:
         """基于检索增强生成回答
         
         Args:
             question: 用户问题
             top_k: 检索的文档数量
-            session_id: 用户会话ID，必须提供
         
         Returns:
             包含回答和源文档的字典
         """
-        # 使用提供的session_id检索文档
-        documents = self.vector_store.search(question, top_k=top_k, session_id=session_id)
+        # 检索相关文档
+        documents = self.vector_store.search(question, top_k=top_k)
         
         # 如果没有找到相关文档，直接返回没有足够信息的回答
         if not documents:
@@ -97,19 +96,18 @@ class RAGService:
             "question": question
         }
     
-    def search_documents(self, query: str, top_k: int = 3, session_id: Optional[str] = None) -> Dict[str, Any]:
+    def search_documents(self, query: str, top_k: int = 3) -> Dict[str, Any]:
         """搜索相关文档
         
         Args:
             query: 搜索查询
             top_k: 返回的文档数量
-            session_id: 用户会话ID，如果提供则只搜索该会话的文档
         
         Returns:
             包含搜索结果的字典
         """
-        # 执行文档搜索，传入session_id参数
-        documents = self.vector_store.search(query, top_k=top_k, session_id=session_id)
+        # 执行文档搜索
+        documents = self.vector_store.search(query, top_k=top_k)
         
         # 处理搜索结果
         search_results = []

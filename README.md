@@ -3,7 +3,7 @@
 
 ## 项目概述
 
-这是一个基于大语言模型和检索增强生成（RAG）技术的智能文档问答系统。用户可以上传文档，系统会自动处理并构建知识库，然后基于这些文档内容回答用户的提问。系统采用前后端分离架构，本README主要描述后端实现。
+这是一个基于大语言模型和检索增强生成（RAG）技术的智能文档问答系统。用户可以上传文档，系统会自动处理并构建知识库，然后基于这些文档内容回答用户的提问。系统设计为本地单用户服务，提供简洁高效的文档问答体验。
 
 ## 系统架构
 
@@ -111,12 +111,12 @@ RAG (Retrieval-Augmented Generation) 是本系统的核心功能，实现流程�
 1. 用户上传文档
 2. 系统解析文档并分割成合适大小的文本块
 3. 为每个文本块计算嵌入向量
-4. 将文本块和向量存储到向量数据库中，附带元数据（包括session_id）
+4. 将文本块和向量存储到向量数据库中
 5. 用户提问时，系统计算问题的嵌入向量
-6. 在向量数据库中检索最相似的文本块（按session_id过滤）
+6. 在向量数据库中检索最相似的文本块
 7. 将检索到的文本块作为上下文，发送给LLM生成回答
 
-**重要说明**：当前版本中，所有RAG查询都需要提供`X-Session-ID`请求头，系统会根据该ID过滤相关文档。
+**系统特点**：作为本地单用户服务，系统会检索所有已上传的文档内容来回答问题，无需会话隔离。
 
 ### 2. 文档处理
 
@@ -149,12 +149,10 @@ LLM服务封装了与大语言模型的交互逻辑：
 
 - `POST /api/qa/query` - 基于文档内容提问
   - **请求体**: `{"question": "问题内容", "top_k": 3}`
-  - **请求头**: 必须包含 `X-Session-ID`
   - **返回**: 回答和相关源文档
 
 - `POST /api/qa/search` - 搜索相关文档
   - **请求体**: `{"query": "搜索内容", "top_k": 3}`
-  - **请求头**: 可选包含 `X-Session-ID` 进行过滤
   - **返回**: 搜索结果列表
 
 - `GET /api/qa/stats` - 获取文档统计信息
@@ -172,20 +170,93 @@ LLM服务封装了与大语言模型的交互逻辑：
 
 ## 环境变量配置
 
-项目使用 `.env` 文件管理环境变量，主要配置LLM服务的API密钥：
+项目使用 `.env` 文件管理环境变量，支持两种LLM提供商：**OpenAI兼容API** 和 **本地Ollama**。
 
-```env
-# LLM API密钥配置
-DEEPSEEK_API_KEY=your_api_key_here
+### 配置文件示例
 
-# 可选配置（如未指定，使用默认值）
-# SERVER_HOST=0.0.0.0
-# SERVER_PORT=8000
-# VECTOR_STORE_PATH=./chroma_db
-# DOCUMENT_STORAGE_PATH=./storage/documents
+复制 `.env.example` 文件为 `.env` 并根据需要修改配置：
+
+```bash
+cp .env.example .env
 ```
 
-当前项目使用DeepSeek API作为LLM服务提供商，您需要在.env文件中配置有效的API密钥。
+### LLM提供商配置
+
+#### 1. 使用OpenAI兼容API（默认）
+
+```env
+# LLM提供商选择
+LLM_PROVIDER=openai
+
+# OpenAI兼容API配置
+DEEPSEEK_API_KEY=your_api_key_here
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_MODEL=deepseek/deepseek-chat-v3.1:free
+```
+
+#### 2. 使用本地Ollama
+
+```env
+# LLM提供商选择
+LLM_PROVIDER=ollama
+
+# Ollama配置
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2
+```
+
+### Ollama安装和使用
+
+如果选择使用Ollama，需要先安装并启动Ollama服务：
+
+1. **安装Ollama**：
+   ```bash
+   # macOS
+   brew install ollama
+   
+   # 或从官网下载：https://ollama.ai
+   ```
+
+2. **启动Ollama服务**：
+   ```bash
+   ollama serve
+   ```
+
+3. **下载模型**：
+   ```bash
+   # 下载llama3.2模型（推荐）
+   ollama pull llama3.2
+   
+   # 或下载其他模型，如：
+   ollama pull qwen2.5
+   ollama pull mistral
+   ```
+
+4. **配置环境变量**：
+   ```env
+   LLM_PROVIDER=ollama
+   OLLAMA_MODEL=llama3.2  # 使用已下载的模型名称
+   ```
+
+### 其他配置选项
+
+```env
+# 服务器配置
+SERVER_HOST=0.0.0.0
+SERVER_PORT=8000
+DEBUG=True
+
+# 存储配置
+VECTOR_STORE_PATH=./chroma_db
+DOCUMENT_STORAGE_PATH=./storage/documents
+
+# 嵌入模型配置
+EMBEDDING_MODEL_NAME=all-MiniLM-L6-v2
+
+# 文本分割配置
+CHUNK_SIZE=1000
+CHUNK_OVERLAP=200
+```
 
 ## 快速开始
 
@@ -226,29 +297,36 @@ bash start.sh help
 ### 注意事项
 
 - 启动开发服务器时，系统会自动清空向量数据库和本地文本缓存
-- 所有RAG查询请求必须包含`X-Session-ID`请求头
+- 系统设计为本地单用户服务，所有文档共享同一个知识库
 - 环境变量`TOKENIZERS_PARALLELISM`已设置为`false`以消除常见警告
+- 项目会自动创建和管理虚拟环境，避免系统包冲突
 
-## 扩展建议
+## 常见问题解决
 
-1. **支持更多文档格式**：添加对PPT、Excel、图片OCR等格式的支持
-2. **多语言支持**：增强对中文等非英语文档的处理能力
-3. **用户管理系统**：添加用户认证、授权和个性化设置
-4. **文档分类和标签**：实现文档分类和标签系统，提高检索精度
-5. **批量处理优化**：优化大量文档的批量处理性能
-6. **模型微调**：基于特定领域文档对模型进行微调
+### 1. externally-managed-environment 错误
 
-## 总结
+如果遇到 `externally-managed-environment` 错误，这是Python 3.11+的安全特性。解决方案：
 
-本项目提供了一个完整的RAG智能文档问答系统的后端实现方案。采用FastAPI和LangChain构建，具有良好的可扩展性和可维护性。系统支持文档上传、处理和基于内容的智能问答，适用于需要处理大量文档并提供智能查询服务的场景。
+**推荐方案**：使用项目提供的启动脚本
+```bash
+bash start.sh install  # 自动创建虚拟环境并安装依赖
+```
 
-当前版本的主要特点：
-- 基于LangChain和ChromaDB实现高效的检索增强生成
-- 使用DeepSeek API作为大语言模型服务
-- 提供完整的RESTful API接口，包含文档管理和问答功能
-- 支持session_id机制，可隔离不同会话的文档和查询
-- 自动处理多种文档格式，包括PDF、Word和文本文件
-- 提供便捷的启动脚本，简化开发和部署流程
-- 内置详细的API文档（Swagger UI和ReDoc）
+**手动方案**：
+```bash
+# 创建虚拟环境
+python3 -m venv venv
 
-项目易于扩展，可以根据需求添加更多功能，如支持更多文档格式、多语言支持、用户管理系统等。
+# 激活虚拟环境
+source venv/bin/activate
+
+# 安装依赖（使用国内镜像源）
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple/
+```
+
+### 2. 网络超时问题
+
+如果安装依赖时遇到网络超时，可以尝试：
+- 使用清华大学镜像源：`-i https://pypi.tuna.tsinghua.edu.cn/simple/`
+- 使用阿里云镜像源：`-i https://mirrors.aliyun.com/pypi/simple/`
+- 增加超时时间：`--timeout 300`

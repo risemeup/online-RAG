@@ -1,4 +1,33 @@
-__pycache__/
+# 忽略向量数据库文件
 chroma_db/
 .env
 storage/documents/
+
+# 虚拟环境
+venv/
+env/
+.venv/
+
+# Python缓存文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 日志文件
+*.log
+
+# 临时文件
+.DS_Store
+Thumbs.db
+
+# 测试文件
+test/storage/*

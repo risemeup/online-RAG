@@ -1,9 +1,18 @@
 import os
+import warnings
 from typing import List, Tuple, Optional
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
 from langchain.schema import Document
 from config.settings import settings
+
+# 禁用 ChromaDB 遥测以避免错误
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["CHROMA_TELEMETRY"] = "False"
+os.environ["CHROMA_TELEMETRY_IMPL"] = "none"
+
+# 抑制 HuggingFace 的弃用警告
+warnings.filterwarnings("ignore", category=FutureWarning, module="huggingface_hub")
 
 class VectorStore:
     def __init__(self):
@@ -29,44 +38,35 @@ class VectorStore:
             添加的文档ID列表
         """
         ids = self.vectorstore.add_documents(documents)
-        # 持久化存储
-        self.vectorstore.persist()
+        # 注意：Chroma 0.4.x+ 版本会自动持久化，无需手动调用persist()
         return ids
     
-    def search(self, query: str, top_k: int = 3, session_id: Optional[str] = None) -> List[Document]:
+    def search(self, query: str, top_k: int = 3) -> List[Document]:
         """基于查询检索相关文档
         
         Args:
             query: 检索查询
             top_k: 返回的最大文档数量
-            session_id: 用户会话ID，如果提供则只返回该会话的文档
         
         Returns:
             检索到的文档列表
         """
-        # 使用ChromaDB原生的元数据过滤功能，不再进行全数据库扫描
-        filter_params = {"session_id": session_id} if session_id else None
-        
-        # 直接使用ChromaDB的similarity_search方法，传入过滤参数
-        results = self.vectorstore.similarity_search(query, k=top_k, filter=filter_params)
+        # 使用ChromaDB的similarity_search方法
+        results = self.vectorstore.similarity_search(query, k=top_k)
         return results
     
-    def search_with_score(self, query: str, top_k: int = 3, session_id: Optional[str] = None) -> List[Tuple[Document, float]]:
+    def search_with_score(self, query: str, top_k: int = 3) -> List[Tuple[Document, float]]:
         """基于查询检索相关文档并返回相似度分数
         
         Args:
             query: 检索查询
             top_k: 返回的最大文档数量
-            session_id: 用户会话ID，如果提供则只返回该会话的文档
         
         Returns:
             检索到的文档和相似度分数的列表
         """
-        # 使用ChromaDB原生的元数据过滤功能，不再进行全数据库扫描
-        filter_params = {"session_id": session_id} if session_id else None
-        
-        # 直接使用ChromaDB的similarity_search_with_score方法，传入过滤参数
-        results = self.vectorstore.similarity_search_with_score(query, k=top_k, filter=filter_params)
+        # 使用ChromaDB的similarity_search_with_score方法
+        results = self.vectorstore.similarity_search_with_score(query, k=top_k)
         return results
     
     def delete_documents_by_metadata(self, metadata_filter: dict) -> None:
@@ -84,17 +84,16 @@ class VectorStore:
             if matching_docs and len(matching_docs.get('ids', [])) > 0:
                 # 如果有匹配的文档，删除它们
                 self.vectorstore.delete(matching_docs['ids'])
-                # 持久化存储
-                self.vectorstore.persist()
+                print(f"成功删除 {len(matching_docs['ids'])} 个向量文档")
+            else:
+                print("没有找到匹配的向量文档")
         except Exception as e:
             print(f"删除向量存储中的文档时出错: {str(e)}")
             # 尝试使用另一种方式删除文档（如果上述方法失败）
             try:
-                # 直接获取所有文档ID并删除（这是一个备选方案）
-                all_docs = self.vectorstore.get()
-                if all_docs and 'ids' in all_docs:
-                    self.vectorstore.delete(all_docs['ids'])
-                    self.vectorstore.persist()
+                # 使用 where 条件删除文档
+                self.vectorstore.delete(where=metadata_filter)
+                print(f"使用备选方法成功删除文档")
             except Exception as inner_e:
                 print(f"备选删除方法也失败: {str(inner_e)}")
                 # 如果两种方法都失败，继续抛出异常以便上层处理

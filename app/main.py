@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import router as api_router
 from config.settings import settings
+from utils.exception_handler import register_exception_handlers
+from utils.logger import get_logger
 
 # 初始化FastAPI应用
 app = FastAPI(
@@ -22,8 +24,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 注册异常处理器
+register_exception_handlers(app)
+
 # 注册API路由器
 app.include_router(api_router, prefix="/api")
+
+# 初始化日志器
+logger = get_logger(name="app")
 
 @app.get("/")
 async def root():
@@ -39,10 +47,13 @@ async def root():
 async def startup_event():
     """应用启动时执行的操作"""
     # 这里可以添加一些初始化代码，例如加载模型、连接数据库等
-    print("RAG智能文档助手API已启动")
+    logger.info("RAG智能文档助手API已启动")
+    logger.info(f"服务运行在: http://0.0.0.0:8000")
+    logger.info(f"API文档地址: http://0.0.0.0:8000/docs")
+    logger.info(f"当前环境配置: LLM提供商={settings.llm_provider}, 模型={settings.llm_model}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """应用关闭时执行的操作"""
     # 这里可以添加一些清理代码
-    print("RAG智能文档助手API已关闭")
+    logger.info("RAG智能文档助手API已关闭")
