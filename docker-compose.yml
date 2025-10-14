@@ -1,0 +1,69 @@
+services:
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smart-doc-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # 从 .env 文件加载环境变量
+      - PYTHONPATH=/app:/app/app
+      # 时区配置
+      - TZ=Asia/Shanghai
+    env_file:
+      - .env
+    volumes:
+      # 持久化存储 - 只挂载 documents 目录，保留 Python 模块
+      - ./backend/storage/documents:/app/storage/documents
+      - ./backend/logs:/app/logs
+      - ./backend/data:/app/data
+      # 向量数据库持久化
+      - chroma_data:/app/chroma_db
+      # 时区配置文件挂载
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    networks:
+      - smart-doc-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 已移除 Ollama 服务；后端改为调用宿主机的 Ollama
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: smart-doc-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - smart-doc-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# 网络配置
+networks:
+  smart-doc-network:
+    driver: bridge
+    name: smart-doc-network
+
+# 数据卷
+volumes:
+  chroma_data:
+    name: smart-doc-chroma-data

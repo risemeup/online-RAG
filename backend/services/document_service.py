@@ -3,8 +3,6 @@ from storage.vector_store import VectorStore
 from utils.text_processor import TextProcessor
 from utils.logger import get_logger
 from typing import List, Dict, Any, Optional
-import os
-import time
 
 # 初始化日志器
 logger = get_logger(name="document_service")

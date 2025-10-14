@@ -8,8 +8,8 @@ class LLMService:
         if settings.llm_provider.lower() == "ollama":
             # 初始化Ollama模型
             self.llm = ChatOllama(
-                model=settings.ollama_model,
-                base_url=settings.ollama_base_url,
+                model=settings.llm_model,
+                base_url=settings.llm_base_url,
                 temperature=0  # 设置为0以获得更确定性的回答
             )
         else:

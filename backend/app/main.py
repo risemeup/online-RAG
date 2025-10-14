@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/app')
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import router as api_router
@@ -41,6 +44,15 @@ async def root():
         "version": app.version,
         "docs_url": "/docs",
         "redoc_url": "/redoc"
+    }
+
+@app.get("/health")
+async def health_check():
+    """健康检查端点"""
+    return {
+        "status": "healthy",
+        "service": "RAG智能文档助手",
+        "version": app.version
     }
 
 @app.on_event("startup")

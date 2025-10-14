@@ -1,7 +1,7 @@
 # 忽略向量数据库文件
-chroma_db/
+backend/chroma_db/
 .env
-storage/documents/
+backend/storage/documents/
 
 # 虚拟环境
 venv/
@@ -30,7 +30,8 @@ __pycache__/
 Thumbs.db
 
 # 测试文件
-test/storage/*
+backend/tests/storage/*
+backend/tests/chroma_db/*
 
 # 前端相关
 front/node_modules/
